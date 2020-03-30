@@ -93,6 +93,8 @@ while [ -n "$data" ]; do
 	fi
 	echo "# $display"
 
+	device="${device#/dev/}"
+
 	echo "hddtemp_info{$(labels device "$device" model "$model" state "$state" raw_unit "$unit")} 1"
 
 	if [ "$state" = 'normal' ]; then
