@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# initial version based heavily on https://github.com/prometheus-community/node-exporter-textfile-collector-scripts/blob/48aaf1cba1309214d30a23a9f4c01816f20ff955/apt.sh
+
 upgrades="$(
 	apt-get --just-print dist-upgrade \
 		| awk -F'[()]' '
