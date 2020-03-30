@@ -62,14 +62,14 @@ escape_label() {
 
 data="$(cat < "/dev/tcp/$host/$port")"
 while [ -n "$data" ]; do
-	disk="$(cut -d"$separator" -f2 <<<"$data")"
+	device="$(cut -d"$separator" -f2 <<<"$data")"
 	model="$(cut -d"$separator" -f3 <<<"$data")"
 	temp="$(cut -d"$separator" -f4 <<<"$data")"
 	unit="$(cut -d"$separator" -f5 <<<"$data")"
 	data="$(cut -d"$separator" -f6- <<<"$data")"
 
 	unit="${unit^^}"
-	display="$disk: $model: $temp°$unit"
+	display="$device: $model: $temp°$unit"
 
 	case "$unit" in
 		F)
@@ -87,6 +87,6 @@ while [ -n "$data" ]; do
 
 	cat <<-EOD
 		# $display
-		hddtemp_celsius{disk="$(escape_label "$disk")",model="$(escape_label "$model")"} $temp
+		hddtemp_celsius{device="$(escape_label "$device")",model="$(escape_label "$model")"} $temp
 	EOD
 done
