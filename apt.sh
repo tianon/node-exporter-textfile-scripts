@@ -52,11 +52,17 @@ echo 'dpkg_count{type="binary"}' "$dpkgBinary"
 echo '# HELP node_reboot_required Node reboot is required for software updates.'
 echo '# TYPE node_reboot_required gauge'
 rebootRequired=0
-for f in {,/var}/run/reboot-required*; do
+for f in {,/var}/run/reboot-required{.pkgs,}; do
 	if [ -f "$f" ]; then
 		rebootRequired=1
+		if base="$(basename "$f")" &&
+			[ "$base" = 'reboot-required.pkgs' ] &&
+			numPkgs="$(wc -l < "$f")" &&
+			[ "$numPkgs" -gt 0 ]
+		then
+			rebootRequired="$numPkgs"
+		fi
 		break
 	fi
 done
 echo "node_reboot_required $rebootRequired"
-# TODO include packages asking for the reboot from reboot-required.pkgs as labels? (node_reboot_required{pkg="linux-image-..."})
