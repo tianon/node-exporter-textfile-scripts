@@ -54,10 +54,24 @@ done
 cat <<-'EOH'
 	# TYPE hddtemp_celsius gauge
 	# HELP hddtemp_celsius Hard drive temperature (from hddtemp daemon).
+
+	# TYPE hddtemp_info gauge
+	# HELP hddtemp_info Drive info (including sleeping drives).
+
 EOH
 
 escape_label() {
 	sed -e 's/["\\]/\\&/g' -e '$!s/$/\\n/' <<<"$*" | tr -d '\n'
+}
+labels() {
+	local labels=()
+	while [ "$#" -ge 2 ]; do
+		local label="$1"; shift
+		local value="$1"; shift
+		value="$(escape_label "$value")"
+		labels+=( "$label=\"$value\"" )
+	done
+	join ',' "${labels[@]}"
 }
 
 data="$(cat < "/dev/tcp/$host/$port")"
@@ -68,25 +82,36 @@ while [ -n "$data" ]; do
 	unit="$(cut -d"$separator" -f5 <<<"$data")"
 	data="$(cut -d"$separator" -f6- <<<"$data")"
 
+	temp="${temp^^}"
 	unit="${unit^^}"
 	display="$device: $model: $temp°$unit"
 
-	case "$unit" in
-		F)
-			# convert to C
-			(( (temp - 32) * 5 / 9 )) || :
-			;;
+	state='normal'
+	if [ "$unit" = '*' ] && [ "$temp" = 'SLP' ]; then
+		state='sleeping'
+		display="$device: $model: drive is sleeping"
+	fi
+	echo "# $display"
 
-		C) ;;
+	echo "hddtemp_info{$(labels device "$device" model "$model" state "$state" raw_unit "$unit")} 1"
 
-		*)
-			echo >&2 "error: unknown unit: '$unit' ($display)"
-			exit 1
-			;;
-	esac
+	if [ "$state" = 'normal' ]; then
+		case "$unit" in
+			F)
+				# convert to C
+				(( (temp - 32) * 5 / 9 )) || :
+				;;
 
-	cat <<-EOD
-		# $display
-		hddtemp_celsius{device="$(escape_label "$device")",model="$(escape_label "$model")"} $temp
-	EOD
+			C) ;;
+
+			*)
+				echo >&2 "error: unknown unit: '$unit' ($display)"
+				exit 1
+				;;
+		esac
+
+		echo "hddtemp_celsius{$(labels device "$device" model "$model")} $temp"
+	fi
+
+	echo
 done
