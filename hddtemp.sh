@@ -52,7 +52,7 @@ while true; do
 done
 
 cat <<-'EOH'
-	# TYPE hddtemp_celsius gague
+	# TYPE hddtemp_celsius gauge
 	# HELP hddtemp_celsius Hard drive temperature (from hddtemp daemon).
 EOH
 
