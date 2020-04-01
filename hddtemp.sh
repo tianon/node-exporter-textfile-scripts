@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# THIS SCRIPT SHOULD BE CONSIDERED DEPRECATED IN FAVOR OF smartctl.sh
+# -- hddtemp is an unmaintained reader of SMART data, and the same data can be scraped much cleaner via smartctl
+
 # this script assumes hddtemp is already running as a TCP-connectable daemon
 # (on Debian, this is accomplished via editing "/etc/default/hddtemp" to set `RUN_DAEMON="true"` and doing "systemctl restart hddtemp")
 
@@ -57,7 +60,6 @@ cat <<-'EOH'
 
 	# TYPE hddtemp_info gauge
 	# HELP hddtemp_info Drive info (including sleeping drives).
-
 EOH
 
 escape_label() {
@@ -91,6 +93,8 @@ while [ -n "$data" ]; do
 		state='sleeping'
 		display="$device: $model: drive is sleeping"
 	fi
+
+	echo
 	echo "# $display"
 
 	device="${device#/dev/}"
@@ -114,6 +118,4 @@ while [ -n "$data" ]; do
 
 		echo "hddtemp_celsius{$(labels device "$device" model "$model")} $temp"
 	fi
-
-	echo
 done
