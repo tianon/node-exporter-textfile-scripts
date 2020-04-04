@@ -43,7 +43,7 @@ labels() {
 	join ',' "${labels[@]}"
 }
 
-devices_json="$(smartctl --json=c --scan)"
+devices_json="$(smartctl --nocheck=standby,0 --json=c --scan)"
 validate_smartctl_json <<<"$devices_json"
 
 info_labels="$(jq <<<"$devices_json" -r '[
@@ -118,7 +118,7 @@ declare -A simple_metrics_map=(
 mapfile -d '' simple_metrics_map_keys < <(printf '%s\0' "${!simple_metrics_map[@]}" | sort -z)
 
 for device in "${devices[@]}"; do
-	smartctl=( smartctl --json=c --all "$device" )
+	smartctl=( smartctl --nocheck=standby,0 --json=c --all "$device" )
 	if [ ! -r "$device" ]; then
 		# opportunistic sudo, when necessary
 		smartctl=( sudo "${smartctl[@]}" )
