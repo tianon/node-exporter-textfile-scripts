@@ -10,7 +10,7 @@ base="${base%.*}" # "apt"
 targetProm="$target/$base.prom"
 trap "$(printf 'rm -f %q' "$targetProm.$$")" EXIT
 
-if [ ! -x "$script" ]; then
+if ! command -v "$script" > /dev/null; then
 	thisScript="$BASH_SOURCE"
 	scriptDir="$(dirname "$thisScript")"
 	if [ ! -x "$scriptDir/$script" ]; then
