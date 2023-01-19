@@ -33,6 +33,10 @@ for namespaceLibrary; do
 			repoName="$repo"
 		fi
 
+		if lastCommitTime="$(git -C "${BASHBREW_LIBRARY:-$HOME/docker/official-images/library}" log -1 --format='format:%ct' -- "$([ "$repoName" = '--all' ] && echo '.' || echo "$repoName")" 2>/dev/null)" && [ -n "$lastCommitTime" ]; then
+			echo "bashbrew_commit_timestamp_seconds{$labels} $lastCommitTime"
+		fi
+
 		arches="$(bashbrew cat --format '{{ range .Entries }}{{ .Architectures | join "\n" }}{{ "\n" }}{{ end }}' "$repoName" | sort -u)"
 
 		archCount="$(wc -l <<<"$arches")"
