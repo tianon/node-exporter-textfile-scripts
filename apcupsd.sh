@@ -29,7 +29,7 @@ declare -A metricMap=(
 	['battery_charge_percent']='BCHARGE'
 	['remaining_minutes']='TIMELEFT'
 	['output_voltage']='OUTPUTV'
-	# TODO somehow do something with STATUS (normally "ONLINE")
+	# TODO somehow do something useful with STATUS (normally "ONLINE ")
 )
 
 for host; do
