@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+systemctl list-units --state failed --output json --no-pager | jq -r '
+	def obj_to_labels:
+		to_entries
+		| map(.key + "=" + (.value | tostring | tojson))
+		| join(",")
+		| "{" + . + "}"
+	;
+	map(
+		"systemd_unit_info" + ({unit: .unit, description: .description} | obj_to_labels) + " 1",
+		"systemd_unit_failed" + ({unit: .unit} | obj_to_labels) + " 1"
+	)
+	| join("\n")
+'
