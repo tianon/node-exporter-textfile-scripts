@@ -5,7 +5,7 @@ set -Eeuo pipefail
 
 upgrades="$(
 	apt-get --just-print dist-upgrade \
-		| awk -F'[()]' '
+		| gawk -F'[()]' '
 			/^Inst/ {
 				sub("^[^ ]+ ", "", $2)
 				sub("\\[", " ", $2)
@@ -16,10 +16,10 @@ upgrades="$(
 		' \
 		| sort \
 		| uniq -c \
-		| awk '
+		| gawk '
 			{
 				gsub(/\\\\/, "\\\\", $2)
-				gsub(/\"/, "\\\"", $2)
+				gsub(/"/, "\\\"", $2)
 				gsub(/\[/, "", $3)
 				gsub(/\]/, "", $3)
 				gsub(/Debian:/, "", $2)
@@ -63,6 +63,10 @@ for f in {,/var}/run/reboot-required{.pkgs,}; do
 			[ "$numPkgs" -gt 0 ]
 		then
 			rebootRequired="$numPkgs"
+			# $ xargs < /run/reboot-required.pkgs -r dpkg-query --show --showformat='${source:Package}\n' | sort | uniq -c
+			#       1 linux-signed-amd64
+			xargs < "$f" dpkg-query --show --showformat='${source:Package}\n' | sort | uniq -c | awk '{ printf "node_reboot_required{source=\"%s\"} %s\n", $2, $1 }'
+			# node_reboot_required{source="linux-signed-amd64"} 1
 		fi
 		break
 	fi
