@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# args: [namespace]:[library directory]
+
 if [ "$#" -eq 0 ]; then
 	set -- ':'
 fi
