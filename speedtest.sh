@@ -68,7 +68,7 @@ fi
 
 for server; do
 	docker=(
-		docker run --rm --network host --init
+		docker run --rm --network host --init --log-driver none
 
 		--mount 'type=volume,src=speedtest-home,dst=/root'
 
