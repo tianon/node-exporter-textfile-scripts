@@ -1,5 +1,7 @@
 # really hacky parser of "mfscli" output for use in Prometheus
 
+# mfscli -p -n -SIN -S... | gawk -f mfs.awk > mfs.prom
+
 BEGIN {
 	FS = "\t"
 }
