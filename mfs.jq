@@ -59,6 +59,10 @@ metric("mfs_cli_info"; 1; {
 metric("mfs_cli_timestamp"; .timestamp * 1000),
 # .shifted_timestamp contains timestamp, but shifted by the offset of the current mfscli timezone 😬
 
+metric("mfs_cli_errors"; .errors | length; {
+	errors: (.errors | join("\n")),
+}),
+
 # -SIM : show only masters states
 # -SIG : show only general master info
 (
