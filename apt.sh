@@ -65,7 +65,7 @@ for f in {,/var}/run/reboot-required{.pkgs,}; do
 			rebootRequired="$numPkgs"
 			# $ xargs < /run/reboot-required.pkgs -r dpkg-query --show --showformat='${source:Package}\n' | sort | uniq -c
 			#       1 linux-signed-amd64
-			xargs < "$f" dpkg-query --show --showformat='${source:Package}\n' | sort | uniq -c | awk '{ printf "node_reboot_required{source=\"%s\"} %s\n", $2, $1 }'
+			xargs < "$f" dpkg-query --show --showformat='${source:Package}\n' | sort | uniq -c | awk '{ printf "node_reboot_required{source=\"%s\"} %s\n", $2, $1 }' || : # "|| :" because the packages in question might've been removed already before reboot 😅
 			# node_reboot_required{source="linux-signed-amd64"} 1
 		fi
 		break
