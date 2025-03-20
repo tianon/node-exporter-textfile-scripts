@@ -15,6 +15,7 @@ for namespaceLibrary; do
 
 	export BASHBREW_LIBRARY="${namespaceLibrary#$BASHBREW_NAMESPACE:}"
 	[ "$BASHBREW_LIBRARY" != "$namespaceLibrary" ]
+	: "${BASHBREW_LIBRARY:=$HOME/docker/official-images/library}"
 
 	if [ -z "$BASHBREW_LIBRARY" ]; then
 		unset BASHBREW_LIBRARY
@@ -35,7 +36,11 @@ for namespaceLibrary; do
 			repoName="$repo"
 		fi
 
-		if lastCommitTime="$(git -C "${BASHBREW_LIBRARY:-$HOME/docker/official-images/library}" log -1 --format='format:%ct' -- "$([ "$repoName" = '--all' ] && echo '.' || echo "$repoName")" 2>/dev/null)" && [ -n "$lastCommitTime" ]; then
+		if lastCommitTime="$(git -C "$BASHBREW_LIBRARY" log -1 --format='format:%H:%ct' -- "$([ "$repoName" = '--all' ] && echo '.' || echo "$repoName")" 2>/dev/null)" && [ -n "$lastCommitTime" ]; then
+			lastCommit="${lastCommitTime%%:*}"
+			[ "$lastCommit" != "$lastCommitTime" ]
+			lastCommitTime="${lastCommitTime#$lastCommit:}"
+			echo "bashbrew_commit_info{$labels,commit=\"$lastCommit\"} 1"
 			echo "bashbrew_commit_timestamp_seconds{$labels} $lastCommitTime"
 		fi
 
