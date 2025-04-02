@@ -50,6 +50,8 @@ tree="$(
 		| reduce range($depth) as $i ("url"; # if we get all the way down, query *just* "url" so we can query deeper
 			"\($orig),jobs[\(.)]"
 		)
+		# in case we got passed "http://jenkins-uri/queue", we should handle the queue-related "items" field too (but not recursively)
+		| . += ",items[task[url]]"
 		| @uri
 	'
 )"
@@ -69,6 +71,7 @@ while [ "${#urls[@]}" -gt 0 ]; do
 				| map(.key + "=" + (.value | tostring | tojson))
 				| join(",")
 			)}"
+			| rtrimstr("{}") # if there were no labels, trim off the empty braces
 		;
 		., (.. | .jobs?[]?)
 		| ._class as $class
@@ -79,11 +82,35 @@ while [ "${#urls[@]}" -gt 0 ]; do
 			"com.cloudbees.hudson.plugins.folder.Folder": "folder",
 			"org.jenkinsci.plugins.workflow.job.WorkflowJob": "job",
 			"org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject": "job",
+			# "http://jenkins-uri/queue/json/api"
+			"hudson.model.Queue": "queue",
 		}[$class] as $type
 		| if keys == ["_class","url"] then
 			# if we get here, we hit the recursion limit and need to go DEEPER
 			[ .url ]
 			# we output arrays to notify us we have URLs we need to continue querying
+		elif $type == "queue" then
+			# queues are a totally special/unique separate thing (on a separate API endpoint, in fact)
+			metric("queue"; {}) + " \(.items | length)",
+			(
+				.items
+				| map(
+					.task.url
+					# *really* rough "URL to job name" conversion
+					| capture(" ^ (https?://[^/]+)? /? (?<name>( job/ [^/]+ ) ( /job/ [^/]+ )* ) (?<num> /[0-9]+ )? /? $ "; "x")
+					| .name
+					| sub("^/?job/"; "")
+					| gsub("/job/"; "/") # TODO this breaks if you have a job named "job" (do not do that)
+				)
+				| group_by(.) # group by job so we can count how many builds are in queue per job
+				| .[]
+				| {
+					job: .[0],
+					count: length,
+				}
+				| metric("queue"; { name: .job }) + " \(.count)"
+			),
+			empty
 		else
 			{
 				# TODO qualify "name" by instance somehow (so two different Jenkins instances get unique values)
