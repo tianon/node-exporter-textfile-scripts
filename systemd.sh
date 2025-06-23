@@ -9,8 +9,8 @@ systemctl list-units --state failed --output json --no-pager | jq -r '
 		| "{" + . + "}"
 	;
 	map(
-		"systemd_unit_info" + ({unit: .unit, description: .description} | obj_to_labels) + " 1",
-		"systemd_unit_failed" + ({unit: .unit} | obj_to_labels) + " 1"
+		"systemd_unit_info" + ({unit, load, description} | obj_to_labels) + " 1",
+		"systemd_unit_failed" + ({unit} | obj_to_labels) + " 1"
 	)
 	| join("\n")
 '
