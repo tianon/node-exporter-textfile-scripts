@@ -123,7 +123,7 @@ while [ "${#urls[@]}" -gt 0 ]; do
 						label: .[0],
 						count: length,
 					}
-					| metric("label_wait"; { label }) + " \(.count)"
+					| metric("label_wait"; { label: .label }) + " \(.count)"
 				)
 			),
 			empty
