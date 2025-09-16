@@ -51,7 +51,7 @@ tree="$(
 			"\($orig),jobs[\(.)]"
 		)
 		# in case we got passed "http://jenkins-uri/queue", we should handle the queue-related "items" field too (but not recursively)
-		| . += ",items[task[url]]"
+		| . += ",items[why,task[url]]"
 		| @uri
 	'
 )"
@@ -94,21 +94,37 @@ while [ "${#urls[@]}" -gt 0 ]; do
 			metric("queue"; {}) + " \(.items | length)",
 			(
 				.items
-				| map(
-					.task.url
-					# *really* rough "URL to job name" conversion
-					| capture(" ^ (https?://[^/]+)? /? (?<name>( job/ [^/]+ ) ( /job/ [^/]+ )* ) (?<num> /[0-9]+ )? /? $ "; "x")
-					| .name
-					| sub("^/?job/"; "")
-					| gsub("/job/"; "/") # TODO this breaks if you have a job named "job" (do not do that)
+				| (
+					map(
+						.task.url
+						# *really* rough "URL to job name" conversion
+						| capture(" ^ (https?://[^/]+)? /? (?<name>( job/ [^/]+ ) ( /job/ [^/]+ )* ) (?<num> /[0-9]+ )? /? $ "; "x")
+						| .name
+						| sub("^/?job/"; "")
+						| gsub("/job/"; "/") # TODO this breaks if you have a job named "job" (do not do that)
+					)
+					| group_by(.) # group by job so we can count how many builds are in queue per job
+					| .[]
+					| {
+						job: .[0],
+						count: length,
+					}
+					| metric("queue"; { name: .job }) + " \(.count)"
+				), (
+					map(
+						# "why" : "Waiting for next available executor on ‘multiarch-riscv64’",
+						.why
+						| capture("^Waiting for next available executor on ‘(?<label>.*)’$"; "")
+						| .label
+					)
+					| group_by(.)
+					| .[]
+					| {
+						label: .[0],
+						count: length,
+					}
+					| metric("label_wait"; { label }) + " \(.count)"
 				)
-				| group_by(.) # group by job so we can count how many builds are in queue per job
-				| .[]
-				| {
-					job: .[0],
-					count: length,
-				}
-				| metric("queue"; { name: .job }) + " \(.count)"
 			),
 			empty
 		else
